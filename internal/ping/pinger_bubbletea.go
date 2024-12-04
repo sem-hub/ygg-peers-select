@@ -34,9 +34,9 @@ type PingResult struct {
 var (
 	currentPingNameStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("211"))
 	doneStyle            = lipgloss.NewStyle().Margin(1, 2)
-	successMark          = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).SetString("✓")
-	failureMark          = lipgloss.NewStyle().Foreground(lipgloss.Color("161")).SetString("✗")
-	lossMark             = lipgloss.NewStyle().Foreground(lipgloss.Color("214")).SetString("✗")
+	successMark          = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).SetString("√")
+	failureMark          = lipgloss.NewStyle().Foreground(lipgloss.Color("161")).SetString("x")
+	lossMark             = lipgloss.NewStyle().Foreground(lipgloss.Color("214")).SetString("x")
 	ipList               []string
 	logger               mlog.Logger
 	pingCount            int
