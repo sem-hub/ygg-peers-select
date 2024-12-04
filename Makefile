@@ -1,7 +1,7 @@
 FLAGS=-ldflags "-s -w"
 PLATFORM := $(shell uname)
 
-ifeq (,$(findsting MSYS_NT,$(PLATFORM)))
+ifeq ($(PLATFORM),$(findsting $(PLATFORM),MSYS_NT))
 EXEC_FILE=ygg-peers-select.exe
 else
 EXEC_FILE=ygg-peers-select
