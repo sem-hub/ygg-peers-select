@@ -180,7 +180,7 @@ func pingPeer(ip string) tea.Cmd {
 	return nil
 }
 
-func Pinger_tea(peers *[]parse.Peer, pCount int) []SortedPeers {
+func Pinger_tea(peers *[]parse.Peer, pCount int) []SortedIps {
 	logger = *mlog.GetLogger()
 
 	pingCount = pCount
@@ -194,9 +194,9 @@ func Pinger_tea(peers *[]parse.Peer, pCount int) []SortedPeers {
 		logger.Fatal("Error running program: " + err.Error())
 	}
 
-	var newList []SortedPeers
+	var newList []SortedIps
 	for _, r := range pingResults {
-		var elem SortedPeers = SortedPeers{r.ip, r.rtt}
+		var elem SortedIps = SortedIps{r.ip, r.rtt}
 		if r.lost == 0 {
 			newList = append(newList, elem)
 		}

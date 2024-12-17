@@ -15,6 +15,7 @@ import (
 	"github.com/sem-hub/ygg-peers-select/internal/parse"
 	pinger "github.com/sem-hub/ygg-peers-select/internal/ping"
 	"github.com/sem-hub/ygg-peers-select/internal/processing"
+	"github.com/sem-hub/ygg-peers-select/internal/utils"
 )
 
 var (
@@ -27,6 +28,7 @@ func init() {
 	flag.BoolVar(&opts.WithGit, "git", false, "download with git. Otherwise downloadd zip file by default.")
 	flag.BoolVar(&opts.GuessCountryYes, "y", false, "accept guessed country.")
 	flag.BoolVar(&opts.DebugLogLevel, "d", false, "show debug messages.")
+	flag.BoolVar(&opts.TestMode, "t", false, "do not ping. Just test.")
 }
 
 func main() {
@@ -37,6 +39,10 @@ func main() {
 		logger.SetLevel(mlog.DEBUG)
 	} else {
 		logger.SetLevel(mlog.INFO)
+	}
+
+	if !utils.AsAdmin() {
+		logger.Fatal("For ping works the app must be run as admin")
 	}
 
 	workDir, err := download.Download(&opts)
@@ -82,22 +88,29 @@ func main() {
 	// We don't need it anymore
 	download.Cleanup()
 
-	/*if len(*peers.GetPeers()) == 0 {
+	if len(*peers.GetPeers()) == 0 {
 		logger.Fatal("No peers found in file")
 
 	}
-	var content string = ""
-	for _, peer := range *peers.GetPeers() {
-		for _, uri := range peer.Uris {
-			content += "[ ] " + uri + "\n"
-		}
-	}
-	processing.SelectProtocols(&content)
-	os.Exit(0)*/
+
+	/*
+		if opts.TestMode {
+			var content string = ""
+			for _, peer := range *peers.GetPeers() {
+				for _, uri := range peer.Uris {
+					content += "[ ] " + uri + "\n"
+				}
+			}
+			processing.SelectProtocols(&content)
+			os.Exit(0)
+		}*/
+
 	fmt.Println("=============== Pinging =====================")
 	newList := pinger.Pinger_tea(peers.GetPeers(), PING_COUNT)
 
 	fmt.Println("=============== sorted =====================")
 
-	processing.Results(&newList, peers.GetPeers())
+	processing.SelectPeers(&newList, peers.GetPeers())
+
+	processing.ShowSelected()
 }

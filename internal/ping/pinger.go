@@ -9,12 +9,12 @@ import (
 	"github.com/sem-hub/ygg-peers-select/internal/parse"
 )
 
-type SortedPeers struct {
+type SortedIps struct {
 	Ip  string
 	Rtt time.Duration
 }
 
-func Pinger(peers *parse.PeersList, ping_count int) []SortedPeers {
+func Pinger(peers *parse.PeersList, ping_count int) []SortedIps {
 	logger := mlog.GetLogger()
 
 	var ipList []string
@@ -23,7 +23,7 @@ func Pinger(peers *parse.PeersList, ping_count int) []SortedPeers {
 		ipList = append(ipList, peer.IpList...)
 	}
 
-	var newList []SortedPeers
+	var newList []SortedIps
 
 	for _, ip := range ipList {
 		logger.Info("Ping peer" + ip)
@@ -33,7 +33,7 @@ func Pinger(peers *parse.PeersList, ping_count int) []SortedPeers {
 			lost = 999
 		}
 		if lost == 0 {
-			var elem SortedPeers = SortedPeers{ip, rtt}
+			var elem SortedIps = SortedIps{ip, rtt}
 			newList = append(newList, elem)
 		}
 		logger.Info(fmt.Sprintf("RTT=%v lost=%v", rtt, lost))
