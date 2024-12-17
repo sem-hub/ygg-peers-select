@@ -31,7 +31,6 @@ var (
 )
 
 type Uri struct {
-	idx      int
 	uri      string
 	ip       string
 	rtt      time.Duration
@@ -221,13 +220,13 @@ func getContent(uris *[]Uri, choice *map[string]bool, cursor int) string {
 	currentViewIdx = make([]int, len(*uris))
 
 	var i int = 1
-	for _, uri := range *uris {
+	for n, uri := range *uris {
 		for _, p := range protocols {
 			m, err := regexp.MatchString(p+"://", uri.uri)
 			if err != nil {
 			} // XXX
 			if (*choice)[p] && m {
-				currentViewIdx[i-1] = uri.idx
+				currentViewIdx[i-1] = n
 				var num string = strconv.Itoa(i)
 				if i < 10 {
 					num = " " + num
@@ -272,22 +271,44 @@ func getContent(uris *[]Uri, choice *map[string]bool, cursor int) string {
 }
 
 func SelectPeers(list *[]pinger.SortedIps, peers *[]parse.Peer) {
-	var i int = 0
 	for _, ip := range *list {
 		urls := utils.FqdnLookup(peers, ip.Ip)
 		for _, url := range urls {
-			uriList = append(uriList, Uri{i, url, ip.Ip, ip.Rtt, false})
-			i++
+			uriList = append(uriList, Uri{url, ip.Ip, ip.Rtt, false})
 		}
 	}
 
 	SelectProtocols(uriList)
 }
 
+func countUri(str string) int {
+	var count int = 0
+	for _, uri := range uriList {
+		if uri.uri == str {
+			count++
+		}
+	}
+	return count
+
+}
 func ShowSelected() {
 	for _, uri := range uriList {
 		if uri.selected {
-			fmt.Println(uri.uri)
+			var str1 string = uri.uri
+			// Replace hostname with IP address if there are more than one
+			if !(parse.Url_ip.MatchString(uri.uri) || parse.Url_ip6.MatchString(uri.uri)) {
+				found := countUri(uri.uri)
+				if parse.Url.MatchString(uri.uri) && found > 1 {
+					str := parse.Url.FindStringSubmatch(uri.uri)
+					name := str[2]
+					if net.ParseIP(uri.ip).To4() == nil {
+						str1 = strings.Replace(uri.uri, name, "["+uri.ip+"]", 1)
+					} else {
+						str1 = strings.Replace(uri.uri, name, uri.ip, 1)
+					}
+				}
+			}
+			fmt.Println(str1)
 		}
 	}
 }

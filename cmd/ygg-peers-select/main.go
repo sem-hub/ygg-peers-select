@@ -108,7 +108,7 @@ func main() {
 	fmt.Println("=============== Pinging =====================")
 	newList := pinger.Pinger_tea(peers.GetPeers(), PING_COUNT)
 
-	fmt.Println("=============== sorted =====================")
+	fmt.Println("=============== Selected =====================")
 
 	processing.SelectPeers(&newList, peers.GetPeers())
 
