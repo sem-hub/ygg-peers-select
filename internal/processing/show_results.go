@@ -27,7 +27,7 @@ var (
 	protocols = []string{"tcp", "tls", "quic", "ws", "wss"}
 
 	currentViewIdx []int
-	uriList []Uri
+	uriList        []Uri
 )
 
 type Uri struct {
@@ -259,7 +259,7 @@ func getContent(uris *[]Uri, choice *map[string]bool, cursor int) string {
 					selChar = "X"
 				}
 				if i == cursor+1 {
-					content += lipgloss.NewStyle().Background(lipgloss.Color("195")).Render(num+": ["+selChar+"] "+line) + "\n"
+					content += lipgloss.NewStyle().Reverse(true).Render(num+": ["+selChar+"] "+line) + "\n"
 				} else {
 					content += num + ": [" + selChar + "] " + line + "\n"
 				}
