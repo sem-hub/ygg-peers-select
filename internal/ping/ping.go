@@ -3,7 +3,7 @@ package pinger
 import (
 	"time"
 
-	pinger "github.com/go-ping/ping"
+	pinger "github.com/prometheus-community/pro-bing"
 )
 
 func Ping(host string, count int) (time.Duration, int, error) {
