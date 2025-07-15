@@ -3,6 +3,7 @@ package parse
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"regexp"
@@ -50,12 +51,12 @@ func (p *PeersList) ParseFile(file string) error {
 
 	f, err := os.Open(file)
 	if err != nil {
-		logger.Fatal("Can't open file " + file)
+		log.Fatal("Can't open file " + file)
 	}
 	defer f.Close()
 	scanner := bufio.NewScanner(f)
 	if !scanner.Scan() {
-		logger.Fatal("File read error")
+		log.Fatal("File read error")
 	}
 
 	var n = int(0)

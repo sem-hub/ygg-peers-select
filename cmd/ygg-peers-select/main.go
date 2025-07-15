@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -34,20 +36,23 @@ func init() {
 func main() {
 	flag.Parse()
 
-	logger := mlog.GetLogger()
+	var logLevel slog.Level
 	if opts.DebugLogLevel {
-		logger.SetLevel(mlog.DEBUG)
+		logLevel = slog.LevelDebug
 	} else {
-		logger.SetLevel(mlog.INFO)
+		logLevel = slog.LevelInfo
 	}
 
+	mlog.Init(logLevel)
+	logger := mlog.GetLogger()
+
 	if !utils.AsAdmin() {
-		logger.Fatal("For ping works the app must be run as admin")
+		log.Fatal("For ping works the app must be run as admin")
 	}
 
 	workDir, err := download.Download(&opts)
 	if err != nil {
-		logger.Fatal("download error")
+		log.Fatal("download error")
 	}
 
 	logger.Debug("work dir: " + workDir)
@@ -66,7 +71,7 @@ func main() {
 	file, err := guesscountry.GetCountryByIP(workDir, opts.GuessCountryYes)
 	if err != nil {
 		download.Cleanup()
-		logger.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 
 	logger.Debug("Use file: " + file)
@@ -77,7 +82,7 @@ func main() {
 
 	if file == "" {
 		download.Cleanup()
-		logger.Fatal("file not selected")
+		log.Fatal("file not selected")
 	}
 
 	logger.Debug("Selected file: " + file)
@@ -89,7 +94,7 @@ func main() {
 	download.Cleanup()
 
 	if len(*peers.GetPeers()) == 0 {
-		logger.Fatal("No peers found in file")
+		log.Fatal("No peers found in file")
 
 	}
 

@@ -2,6 +2,8 @@ package pinger
 
 import (
 	"fmt"
+	"log"
+	"log/slog"
 	"sort"
 	"strings"
 	"time"
@@ -38,7 +40,7 @@ var (
 	failureMark          = lipgloss.NewStyle().Foreground(lipgloss.Color("161")).SetString("x")
 	lossMark             = lipgloss.NewStyle().Foreground(lipgloss.Color("214")).SetString("x")
 	ipList               []string
-	logger               mlog.Logger
+	logger               *slog.Logger
 	pingCount            int
 	finished             bool = false
 	lost                 int
@@ -181,7 +183,7 @@ func pingPeer(ip string) tea.Cmd {
 }
 
 func Pinger_tea(peers *[]parse.Peer, pCount int) []SortedIps {
-	logger = *mlog.GetLogger()
+	logger = mlog.GetLogger()
 
 	pingCount = pCount
 
@@ -191,7 +193,7 @@ func Pinger_tea(peers *[]parse.Peer, pCount int) []SortedIps {
 	}
 
 	if _, err := tea.NewProgram(newModel()).Run(); err != nil {
-		logger.Fatal("Error running program: " + err.Error())
+		log.Fatal("Error running program: " + err.Error())
 	}
 
 	var newList []SortedIps

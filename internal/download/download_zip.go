@@ -2,6 +2,7 @@ package download
 
 import (
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -37,7 +38,7 @@ func (p *DownloadZip) Download() error {
 
 	file, err := os.Create(filepath.Join(p.tempDir.path, "master.zip"))
 	if err != nil {
-		logger.Fatal("Can't create file: " + err.Error())
+		log.Fatal("Can't create file: " + err.Error())
 	}
 	defer file.Close()
 
@@ -50,7 +51,7 @@ func (p *DownloadZip) Download() error {
 	// Put content on file
 	resp, err := client.Get(fileUrl)
 	if err != nil {
-		logger.Fatal("Can't fetch file: " + err.Error())
+		log.Fatal("Can't fetch file: " + err.Error())
 	}
 	defer resp.Body.Close()
 

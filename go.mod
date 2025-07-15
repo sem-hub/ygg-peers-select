@@ -7,7 +7,8 @@ require (
 	github.com/charmbracelet/bubbletea v1.2.4
 	github.com/charmbracelet/lipgloss v1.0.0
 	github.com/go-ping/ping v1.2.0
-	golang.org/x/sys v0.28.0
+	github.com/lmittmann/tint v1.1.2
+	golang.org/x/sys v0.34.0
 	gopkg.in/src-d/go-git.v4 v4.13.1
 )
 

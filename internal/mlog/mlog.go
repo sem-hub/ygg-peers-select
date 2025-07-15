@@ -1,58 +1,37 @@
 package mlog
 
 import (
-	"fmt"
+	"log/slog"
 	"os"
-)
 
-const (
-	DEBUG = iota
-	INFO
-	WARN
-	ERROR
+	"github.com/lmittmann/tint"
 )
-
-type Logger struct {
-	level int
-}
 
 var (
-	logHandler Logger
+	logger *slog.Logger
 )
 
-func GetLogger() *Logger {
-	return &logHandler
-}
-
-func (log *Logger) SetLevel(level int) {
-	log.level = level
-}
-
-func (log *Logger) Fatal(msg string) {
-	log.Error(msg)
-	os.Exit(1)
-}
-
-func (log *Logger) Debug(msg string) {
-	if log.level == DEBUG {
-		fmt.Println(msg)
+func onlyMessage(groups []string, a slog.Attr) slog.Attr {
+	if a.Key == slog.MessageKey && len(groups) == 0 {
+		return a
 	}
+	return slog.Attr{}
 }
 
-func (log *Logger) Info(msg string) {
-	if log.level <= INFO {
-		fmt.Println(msg)
-	}
+func Init(level slog.Level) {
+	logger = slog.New(
+		tint.NewHandler(
+			os.Stderr,
+			&tint.Options{
+				ReplaceAttr: onlyMessage,
+				Level:       level,
+			},
+		),
+	)
+	slog.SetDefault(logger)
+
 }
 
-func (log *Logger) Warning(msg string) {
-	if log.level <= WARN {
-		fmt.Println(msg)
-	}
-}
-
-func (log *Logger) Error(msg string) {
-	if log.level <= ERROR {
-		fmt.Println(msg)
-	}
+func GetLogger() *slog.Logger {
+	return logger
 }
