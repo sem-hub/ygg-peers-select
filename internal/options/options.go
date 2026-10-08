@@ -5,4 +5,5 @@ type Options struct {
 	GuessCountryYes bool
 	TestMode        bool
 	Verbose         bool
+	Ipv4            bool
 }

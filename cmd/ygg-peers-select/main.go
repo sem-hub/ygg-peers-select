@@ -31,6 +31,7 @@ func init() {
 	flag.BoolVar(&opts.GuessCountryYes, "y", false, "accept guessed country.")
 	flag.BoolVar(&opts.TestMode, "t", false, "do not ping. Just select peers.")
 	flag.BoolVar(&opts.Verbose, "v", false, "show verbose messages.")
+	flag.BoolVar(&opts.Ipv4, "4", false, "use IPv4 only.")
 }
 
 func main() {
@@ -88,7 +89,7 @@ func main() {
 	logger.Debug("Selected file: " + file)
 
 	peers := &parse.PeersList{}
-	peers.ParseFile(file)
+	peers.ParseFile(file, opts.Ipv4)
 
 	// We don't need it anymore
 	download.Cleanup()

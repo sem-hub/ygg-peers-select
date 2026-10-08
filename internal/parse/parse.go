@@ -46,7 +46,7 @@ func (p *PeersList) GetPeers() *[]Peer {
 	return &p.Peers
 }
 
-func (p *PeersList) ParseFile(file string) error {
+func (p *PeersList) ParseFile(file string, ipv4 bool) error {
 	logger := mlog.GetLogger()
 
 	f, err := os.Open(file)
@@ -77,6 +77,9 @@ func (p *PeersList) ParseFile(file string) error {
 			m++
 		}
 		if Url_ip6.MatchString(scanner.Text()) {
+			if ipv4 {
+				continue
+			}
 			str := Url_ip6.FindStringSubmatch(scanner.Text())
 			uri = str[0]
 			name = str[2]
@@ -118,7 +121,13 @@ func (p *PeersList) ParseFile(file string) error {
 			if err != nil {
 				logger.Error("Name lookup error for: " + fqdn)
 			}
-			ipList[fqdn] = ips
+			fileteredIps := make([]string, 0)
+			for _, ip := range ips {
+				if net.ParseIP(ip).To4() != nil {
+					fileteredIps = append(fileteredIps, ip)
+				}
+			}
+			ipList[fqdn] = fileteredIps
 		} else {
 			logger.Debug("Not lookup name" + fqdn)
 			ipList[fqdn] = append(ipList[fqdn], fqdn)
