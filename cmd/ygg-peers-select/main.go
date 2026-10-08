@@ -29,7 +29,7 @@ const PING_COUNT = 10
 func init() {
 	flag.BoolVar(&opts.WithGit, "git", false, "download with git. Otherwise downloadd zip file by default.")
 	flag.BoolVar(&opts.GuessCountryYes, "y", false, "accept guessed country.")
-	flag.BoolVar(&opts.TestMode, "t", false, "do not ping. Just test.")
+	flag.BoolVar(&opts.TestMode, "t", false, "do not ping. Just select peers.")
 	flag.BoolVar(&opts.Verbose, "v", false, "show verbose messages.")
 }
 
