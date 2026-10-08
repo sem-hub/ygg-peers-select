@@ -29,15 +29,15 @@ const PING_COUNT = 10
 func init() {
 	flag.BoolVar(&opts.WithGit, "git", false, "download with git. Otherwise downloadd zip file by default.")
 	flag.BoolVar(&opts.GuessCountryYes, "y", false, "accept guessed country.")
-	flag.BoolVar(&opts.DebugLogLevel, "d", false, "show debug messages.")
 	flag.BoolVar(&opts.TestMode, "t", false, "do not ping. Just test.")
+	flag.BoolVar(&opts.Verbose, "v", false, "show verbose messages.")
 }
 
 func main() {
 	flag.Parse()
 
 	var logLevel slog.Level
-	if opts.DebugLogLevel {
+	if opts.Verbose {
 		logLevel = slog.LevelDebug
 	} else {
 		logLevel = slog.LevelInfo
@@ -97,18 +97,16 @@ func main() {
 		log.Fatal("No peers found in file")
 
 	}
-
-	/*
-		if opts.TestMode {
-			var content string = ""
-			for _, peer := range *peers.GetPeers() {
-				for _, uri := range peer.Uris {
-					content += "[ ] " + uri + "\n"
-				}
+	if opts.TestMode {
+		var content []processing.Uri
+		for _, peer := range *peers.GetPeers() {
+			for _, uri := range peer.Uris {
+				content = append(content, processing.Uri{Uri: uri, Ip: "", Rtt: 0, Selected: false})
 			}
-			processing.SelectProtocols(&content)
-			os.Exit(0)
-		}*/
+		}
+		processing.SelectProtocols(content)
+		os.Exit(0)
+	}
 
 	fmt.Println("=============== Pinging =====================")
 	newList := pinger.Pinger_tea(peers.GetPeers(), PING_COUNT)

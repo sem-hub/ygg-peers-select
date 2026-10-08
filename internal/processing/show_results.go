@@ -31,10 +31,10 @@ var (
 )
 
 type Uri struct {
-	uri      string
-	ip       string
-	rtt      time.Duration
-	selected bool
+	Uri      string
+	Ip       string
+	Rtt      time.Duration
+	Selected bool
 }
 
 type model struct {
@@ -154,7 +154,7 @@ func updateChoices(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 				m.viewport.SetContent(getContent(&m.uris, &m.choice, m.downCursor))
 				m.viewport.GotoTop()
 			} else {
-				m.uris[currentViewIdx[m.downCursor]].selected = !m.uris[currentViewIdx[m.downCursor]].selected
+				m.uris[currentViewIdx[m.downCursor]].Selected = !m.uris[currentViewIdx[m.downCursor]].Selected
 				m.viewport.SetContent(getContent(&m.uris, &m.choice, m.downCursor))
 			}
 			var cmd tea.Cmd
@@ -222,7 +222,7 @@ func getContent(uris *[]Uri, choice *map[string]bool, cursor int) string {
 	var i int = 1
 	for n, uri := range *uris {
 		for _, p := range protocols {
-			m, err := regexp.MatchString(p+"://", uri.uri)
+			m, err := regexp.MatchString(p+"://", uri.Uri)
 			if err != nil {
 			} // XXX
 			if (*choice)[p] && m {
@@ -232,29 +232,29 @@ func getContent(uris *[]Uri, choice *map[string]bool, cursor int) string {
 					num = " " + num
 				}
 				var msgStyle lipgloss.Style = veryFastMark
-				if uri.rtt > time.Duration(time.Millisecond*10) {
+				if uri.Rtt > time.Duration(time.Millisecond*10) {
 					msgStyle = fastMark
 				}
-				if uri.rtt > time.Duration(time.Millisecond*20) {
+				if uri.Rtt > time.Duration(time.Millisecond*20) {
 					msgStyle = notBadMark
 				}
-				if uri.rtt > time.Duration(time.Millisecond*50) {
+				if uri.Rtt > time.Duration(time.Millisecond*50) {
 					msgStyle = badMark
 				}
 				var ipType string = "IPv4"
-				if net.ParseIP(uri.ip).To4() == nil {
+				if net.ParseIP(uri.Ip).To4() == nil {
 					ipType = "IPv6"
 				}
 
 				var line string
-				if parse.Url_ip.MatchString(uri.uri) || parse.Url_ip6.MatchString(uri.uri) {
-					line += msgStyle.Render(fmt.Sprintf("%s %v", uri.uri, uri.rtt))
+				if parse.Url_ip.MatchString(uri.Uri) || parse.Url_ip6.MatchString(uri.Uri) {
+					line += msgStyle.Render(fmt.Sprintf("%s %v", uri.Uri, uri.Rtt))
 				} else {
-					line += msgStyle.Render(fmt.Sprintf("%s (%s) %s", uri.uri, ipType, uri.rtt))
+					line += msgStyle.Render(fmt.Sprintf("%s (%s) %s", uri.Uri, ipType, uri.Rtt))
 				}
 
 				var selChar string = " "
-				if uri.selected {
+				if uri.Selected {
 					selChar = "X"
 				}
 				if i == cursor+1 {
@@ -284,7 +284,7 @@ func SelectPeers(list *[]pinger.SortedIps, peers *[]parse.Peer) {
 func countUri(str string) int {
 	var count int = 0
 	for _, uri := range uriList {
-		if uri.uri == str {
+		if uri.Uri == str {
 			count++
 		}
 	}
@@ -293,18 +293,18 @@ func countUri(str string) int {
 }
 func ShowSelected() {
 	for _, uri := range uriList {
-		if uri.selected {
-			var str1 string = uri.uri
+		if uri.Selected {
+			var str1 string = uri.Uri
 			// Replace hostname with IP address if there are more than one
-			if !(parse.Url_ip.MatchString(uri.uri) || parse.Url_ip6.MatchString(uri.uri)) {
-				found := countUri(uri.uri)
-				if parse.Url.MatchString(uri.uri) && found > 1 {
-					str := parse.Url.FindStringSubmatch(uri.uri)
+			if !(parse.Url_ip.MatchString(uri.Uri) || parse.Url_ip6.MatchString(uri.Uri)) {
+				found := countUri(uri.Uri)
+				if parse.Url.MatchString(uri.Uri) && found > 1 {
+					str := parse.Url.FindStringSubmatch(uri.Uri)
 					name := str[2]
-					if net.ParseIP(uri.ip).To4() == nil {
-						str1 = strings.Replace(uri.uri, name, "["+uri.ip+"]", 1)
+					if net.ParseIP(uri.Ip).To4() == nil {
+						str1 = strings.Replace(uri.Uri, name, "["+uri.Ip+"]", 1)
 					} else {
-						str1 = strings.Replace(uri.uri, name, uri.ip, 1)
+						str1 = strings.Replace(uri.Uri, name, uri.Ip, 1)
 					}
 				}
 			}
