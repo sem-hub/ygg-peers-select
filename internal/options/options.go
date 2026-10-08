@@ -7,3 +7,6 @@ type Options struct {
 	Verbose         bool
 	Ipv4            bool
 }
+var (
+	Opts Options = Options{}
+)

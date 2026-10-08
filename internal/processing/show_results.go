@@ -11,6 +11,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/sem-hub/ygg-peers-select/internal/options"
 	"github.com/sem-hub/ygg-peers-select/internal/parse"
 	pinger "github.com/sem-hub/ygg-peers-select/internal/ping"
 	"github.com/sem-hub/ygg-peers-select/internal/utils"
@@ -248,9 +249,21 @@ func getContent(uris *[]Uri, choice *map[string]bool, cursor int) string {
 
 				var line string
 				if parse.Url_ip.MatchString(uri.Uri) || parse.Url_ip6.MatchString(uri.Uri) {
-					line += msgStyle.Render(fmt.Sprintf("%s %v", uri.Uri, uri.Rtt))
+					if options.Opts.TestMode {
+						line += msgStyle.Render(fmt.Sprintf("%s", uri.Uri))
+					} else {
+						line += msgStyle.Render(fmt.Sprintf("%s %v", uri.Uri, uri.Rtt))
+					}
 				} else {
-					line += msgStyle.Render(fmt.Sprintf("%s (%s) %s", uri.Uri, ipType, uri.Rtt))
+					if options.Opts.TestMode {
+						line += msgStyle.Render(fmt.Sprintf("%s", uri.Uri))
+					} else {
+						if options.Opts.Ipv4 {
+							line += msgStyle.Render(fmt.Sprintf("%s %v", uri.Uri, uri.Rtt))
+						} else {
+							line += msgStyle.Render(fmt.Sprintf("%s (%s) %s", uri.Uri, ipType, uri.Rtt))
+						}
+					}
 				}
 
 				var selChar string = " "
@@ -268,6 +281,10 @@ func getContent(uris *[]Uri, choice *map[string]bool, cursor int) string {
 	}
 	return content
 
+}
+
+func SetUriList(list []Uri) {
+	uriList = list
 }
 
 func SelectPeers(list *[]pinger.SortedIps, peers *[]parse.Peer) {
@@ -291,6 +308,7 @@ func countUri(str string) int {
 	return count
 
 }
+
 func ShowSelected() {
 	for _, uri := range uriList {
 		if uri.Selected {

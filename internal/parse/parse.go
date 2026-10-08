@@ -11,6 +11,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/sem-hub/ygg-peers-select/internal/mlog"
+	"github.com/sem-hub/ygg-peers-select/internal/options"
 )
 
 type PeersList struct {
@@ -46,7 +47,7 @@ func (p *PeersList) GetPeers() *[]Peer {
 	return &p.Peers
 }
 
-func (p *PeersList) ParseFile(file string, ipv4 bool) error {
+func (p *PeersList) ParseFile(file string) error {
 	logger := mlog.GetLogger()
 
 	f, err := os.Open(file)
@@ -77,7 +78,7 @@ func (p *PeersList) ParseFile(file string, ipv4 bool) error {
 			m++
 		}
 		if Url_ip6.MatchString(scanner.Text()) {
-			if ipv4 {
+			if options.Opts.Ipv4 {
 				continue
 			}
 			str := Url_ip6.FindStringSubmatch(scanner.Text())

@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/sem-hub/ygg-peers-select/internal/interactive"
 	"github.com/sem-hub/ygg-peers-select/internal/mlog"
+	"github.com/sem-hub/ygg-peers-select/internal/options"
 )
 
 type apiData struct {
@@ -19,7 +20,7 @@ type apiData struct {
 	Country   string `json:"country"`
 }
 
-func GetCountryByIP(workDir string, dontAsk bool) (string, error) {
+func GetCountryByIP(workDir string) (string, error) {
 	const apiUrl = "http://ip-api.com/json/?fields=query,status,continent,country"
 
 	logger := mlog.GetLogger()
@@ -60,7 +61,7 @@ func GetCountryByIP(workDir string, dontAsk bool) (string, error) {
 	}
 	f.Close()
 
-	if dontAsk {
+	if options.Opts.GuessCountryYes {
 		logger.Info("Use country: " +
 			lipgloss.NewStyle().Foreground(lipgloss.Color("211")).Render(countryGuessed))
 		return path, nil

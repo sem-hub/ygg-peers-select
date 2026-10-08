@@ -20,25 +20,21 @@ import (
 	"github.com/sem-hub/ygg-peers-select/internal/utils"
 )
 
-var (
-	opts options.Options = options.Options{}
-)
-
 const PING_COUNT = 10
 
 func init() {
-	flag.BoolVar(&opts.WithGit, "git", false, "download with git. Otherwise downloadd zip file by default.")
-	flag.BoolVar(&opts.GuessCountryYes, "y", false, "accept guessed country.")
-	flag.BoolVar(&opts.TestMode, "t", false, "do not ping. Just select peers.")
-	flag.BoolVar(&opts.Verbose, "v", false, "show verbose messages.")
-	flag.BoolVar(&opts.Ipv4, "4", false, "use IPv4 only.")
+	flag.BoolVar(&options.Opts.WithGit, "git", false, "download with git. Otherwise downloadd zip file by default.")
+	flag.BoolVar(&options.Opts.GuessCountryYes, "y", false, "accept guessed country.")
+	flag.BoolVar(&options.Opts.TestMode, "t", false, "do not ping. Just select peers.")
+	flag.BoolVar(&options.Opts.Verbose, "v", false, "show verbose messages.")
+	flag.BoolVar(&options.Opts.Ipv4, "4", false, "use IPv4 only.")
 }
 
 func main() {
 	flag.Parse()
 
 	var logLevel slog.Level
-	if opts.Verbose {
+	if options.Opts.Verbose {
 		logLevel = slog.LevelDebug
 	} else {
 		logLevel = slog.LevelInfo
@@ -51,7 +47,7 @@ func main() {
 		log.Fatal("For ping works the app must be run as admin")
 	}
 
-	workDir, err := download.Download(&opts)
+	workDir, err := download.Download()
 	if err != nil {
 		log.Fatal("download error")
 	}
@@ -69,7 +65,7 @@ func main() {
 		os.Exit(0)
 	}()
 
-	file, err := guesscountry.GetCountryByIP(workDir, opts.GuessCountryYes)
+	file, err := guesscountry.GetCountryByIP(workDir)
 	if err != nil {
 		download.Cleanup()
 		log.Fatal(err.Error())
@@ -89,7 +85,7 @@ func main() {
 	logger.Debug("Selected file: " + file)
 
 	peers := &parse.PeersList{}
-	peers.ParseFile(file, opts.Ipv4)
+	peers.ParseFile(file)
 
 	// We don't need it anymore
 	download.Cleanup()
@@ -98,7 +94,7 @@ func main() {
 		log.Fatal("No peers found in file")
 
 	}
-	if opts.TestMode {
+	if options.Opts.TestMode {
 		var content []processing.Uri
 		for _, peer := range *peers.GetPeers() {
 			for _, uri := range peer.Uris {
@@ -106,6 +102,8 @@ func main() {
 			}
 		}
 		processing.SelectProtocols(content)
+		processing.SetUriList(content)
+		processing.ShowSelected()
 		os.Exit(0)
 	}
 

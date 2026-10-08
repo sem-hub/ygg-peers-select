@@ -17,8 +17,8 @@ var (
 	p Downloader = nil
 )
 
-func Download(o *options.Options) (string, error) {
-	if o.WithGit {
+func Download() (string, error) {
+	if options.Opts.WithGit {
 		p = &DownloadGit{}
 	} else {
 		p = &DownloadZip{}
