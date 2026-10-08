@@ -58,6 +58,9 @@ func (p *PeersList) ParseFile(file string) error {
 	if !scanner.Scan() {
 		log.Fatal("File read error")
 	}
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("scan input: %w", err)
+	}
 
 	var n = int(0)
 	var m = int(0)
