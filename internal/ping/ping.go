@@ -15,6 +15,7 @@ func Ping(host string, count int) (time.Duration, int, error) {
 	//pinger.Debug = true
 	pinger.Timeout = 3 * time.Second
 	pinger.Interval = 1 * time.Second
+	pinger.SetTrafficClass(0)
 	pinger.SetPrivileged(true)
 	err = pinger.Run()
 	if err != nil {
