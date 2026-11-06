@@ -2,7 +2,6 @@ package processing
 
 import (
 	"fmt"
-	"net"
 	"regexp"
 	"strconv"
 	"strings"
@@ -14,7 +13,6 @@ import (
 	"github.com/sem-hub/ygg-peers-select/internal/options"
 	"github.com/sem-hub/ygg-peers-select/internal/parse"
 	pinger "github.com/sem-hub/ygg-peers-select/internal/ping"
-	"github.com/sem-hub/ygg-peers-select/internal/utils"
 )
 
 var (
@@ -33,7 +31,10 @@ var (
 
 type Uri struct {
 	Uri      string
-	Ip       string
+	Ip4      []string
+	Ip6      []string
+	Rtt4     time.Duration
+	Rtt6     time.Duration
 	Rtt      time.Duration
 	Selected bool
 }
@@ -242,10 +243,6 @@ func getContent(uris *[]Uri, choice *map[string]bool, cursor int) string {
 				if uri.Rtt > time.Duration(time.Millisecond*50) {
 					msgStyle = badMark
 				}
-				var ipType string = "IPv4"
-				if net.ParseIP(uri.Ip).To4() == nil {
-					ipType = "IPv6"
-				}
 
 				var line string
 				if parse.Url_ip.MatchString(uri.Uri) || parse.Url_ip6.MatchString(uri.Uri) {
@@ -261,7 +258,7 @@ func getContent(uris *[]Uri, choice *map[string]bool, cursor int) string {
 						if options.Opts.Ipv4 {
 							line += msgStyle.Render(fmt.Sprintf("%s %v", uri.Uri, uri.Rtt))
 						} else {
-							line += msgStyle.Render(fmt.Sprintf("%s (%s) %s", uri.Uri, ipType, uri.Rtt))
+							line += msgStyle.Render(fmt.Sprintf("%s %v", uri.Uri, uri.Rtt))
 						}
 					}
 				}
@@ -287,14 +284,10 @@ func SetUriList(list []Uri) {
 	uriList = list
 }
 
-func SelectPeers(list *[]pinger.SortedIps, peers *[]parse.Peer) {
-	for _, ip := range *list {
-		urls := utils.FqdnLookup(peers, ip.Ip)
-		for _, url := range urls {
-			uriList = append(uriList, Uri{url, ip.Ip, ip.Rtt, false})
-		}
+func SelectPeers(list *[]pinger.SortedIps) {
+	for _, r := range *list {
+		uriList = append(uriList, Uri{Uri: r.Ip, Rtt: r.Rtt, Selected: false})
 	}
-
 	SelectProtocols(uriList)
 }
 
@@ -317,13 +310,13 @@ func ShowSelected() {
 			if !(parse.Url_ip.MatchString(uri.Uri) || parse.Url_ip6.MatchString(uri.Uri)) {
 				found := countUri(uri.Uri)
 				if parse.Url.MatchString(uri.Uri) && found > 1 {
-					str := parse.Url.FindStringSubmatch(uri.Uri)
+					/*str := parse.Url.FindStringSubmatch(uri.Uri)
 					name := str[2]
 					if net.ParseIP(uri.Ip).To4() == nil {
 						str1 = strings.Replace(uri.Uri, name, "["+uri.Ip+"]", 1)
 					} else {
 						str1 = strings.Replace(uri.Uri, name, uri.Ip, 1)
-					}
+					}*/
 				}
 			}
 			fmt.Println(str1)

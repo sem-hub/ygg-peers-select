@@ -5,6 +5,7 @@ import (
 	"log"
 	"log/slog"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,7 +15,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/sem-hub/ygg-peers-select/internal/mlog"
-	"github.com/sem-hub/ygg-peers-select/internal/parse"
 )
 
 type model struct {
@@ -31,6 +31,11 @@ type PingResult struct {
 	ip   string
 	rtt  time.Duration
 	lost int
+}
+
+type SortedIps struct {
+	Ip  string
+	Rtt time.Duration
 }
 
 var (
@@ -78,6 +83,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case ipMsg:
 		peer := (*m.peers)[m.index]
+		logger.Debug("Processing peer: " + peer + ", rtt: " + rtt.String() + ", lost: " + strconv.Itoa(lost))
+		if lost == 0 {
+			result := PingResult{peer, rtt, lost}
+			pingResults = append(pingResults, result)
+		}
 		if m.index >= len(*m.peers)-1 {
 			// We're done!
 			m.done = true
@@ -96,7 +106,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				tea.Quit,                        // exit the program
 			)
 		}
-
 		// Update progress bar
 		m.index++
 		progressCmd := m.progress.SetPercent(float64(m.index) / float64(len(*m.peers)))
@@ -116,7 +125,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Batch(
 			progressCmd,
 			tea.Printf("%s %s", mark, peer), // print success message above our program
-			pingPeer((*m.peers)[m.index]),   // ping next IP
+			pingPeer((*m.peers)[m.index]),   // ping next URI
 			m.spinner.Tick,
 		)
 	case spinner.TickMsg:
@@ -124,8 +133,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.spinner, cmd = m.spinner.Update(msg)
 		if finished {
 			finished = false
-			result := PingResult{(*m.peers)[m.index], rtt, lost}
-			pingResults = append(pingResults, result)
+			//result := PingResult{(*m.peers)[m.index], rtt, lost}
+			//pingResults = append(pingResults, result)
+			//logger.Debug(fmt.Sprintf("Ping result: %+v", result))
 			cmd = tea.Cmd(func() tea.Msg {
 				return ipMsg((*m.peers)[m.index])
 			})
@@ -166,30 +176,31 @@ func (m model) View() string {
 
 type ipMsg string
 
-func pingPeer(ip string) tea.Cmd {
+func pingPeer(uri string) tea.Cmd {
 	finished = false
 
 	go func(ip string) {
 		var err error
-		rtt, lost, err = Ping(ip, pingCount)
+		rtt, lost, err = Ping(uri, pingCount)
 		if err != nil {
 			logger.Error(err.Error())
+			lost = pingCount
 		}
-		logger.Debug(fmt.Sprintf("rtt: %v, lost: %d, err: %v", rtt, lost, err))
+		//logger.Debug(fmt.Sprintf("\r\nrtt: %v, lost: %d, err: %v\r\n", rtt, lost, err))
 		finished = true
-	}(ip)
+	}(uri)
 
 	return nil
 }
 
-func Pinger_tea(peers *[]parse.Peer, pCount int) []SortedIps {
+func Pinger_tea(uris []string, pCount int) []SortedIps {
 	logger = mlog.GetLogger()
 
 	pingCount = pCount
 
-	for _, peer := range *peers {
-		logger.Debug(fmt.Sprint("Peer: ", peer.Idx, peer.Name, peer.IpList, peer.Uris))
-		ipList = append(ipList, peer.IpList...)
+	for _, uri := range uris {
+		logger.Debug(fmt.Sprint("URI: ", uri))
+		ipList = append(ipList, uri)
 	}
 
 	if _, err := tea.NewProgram(newModel()).Run(); err != nil {
@@ -199,9 +210,7 @@ func Pinger_tea(peers *[]parse.Peer, pCount int) []SortedIps {
 	var newList []SortedIps
 	for _, r := range pingResults {
 		var elem SortedIps = SortedIps{r.ip, r.rtt}
-		if r.lost == 0 {
-			newList = append(newList, elem)
-		}
+		newList = append(newList, elem)
 	}
 
 	sort.Slice(newList, func(i, j int) bool {

@@ -17,10 +17,9 @@ import (
 	"github.com/sem-hub/ygg-peers-select/internal/parse"
 	pinger "github.com/sem-hub/ygg-peers-select/internal/ping"
 	"github.com/sem-hub/ygg-peers-select/internal/processing"
-	"github.com/sem-hub/ygg-peers-select/internal/utils"
 )
 
-const PING_COUNT = 10
+const PING_COUNT = 5
 
 func init() {
 	flag.BoolVar(&options.Opts.WithGit, "git", false, "download with git. Otherwise downloadd zip file by default.")
@@ -42,10 +41,6 @@ func main() {
 
 	mlog.Init(logLevel)
 	logger := mlog.GetLogger()
-
-	if !utils.AsAdmin() {
-		log.Fatal("For ping works the app must be run as admin")
-	}
 
 	workDir, err := download.Download()
 	if err != nil {
@@ -96,10 +91,9 @@ func main() {
 	}
 	if options.Opts.TestMode {
 		var content []processing.Uri
-		for _, peer := range *peers.GetPeers() {
-			for _, uri := range peer.Uris {
-				content = append(content, processing.Uri{Uri: uri, Ip: "", Rtt: 0, Selected: false})
-			}
+		for _, uri := range *peers.GetPeers() {
+			content = append(content, processing.Uri{Uri: uri, Ip4: make([]string, 0), Ip6: make([]string, 0),
+				Rtt4: 0, Rtt6: 0, Rtt: 0, Selected: false})
 		}
 		processing.SelectProtocols(content)
 		processing.SetUriList(content)
@@ -108,11 +102,11 @@ func main() {
 	}
 
 	fmt.Println("=============== Pinging =====================")
-	newList := pinger.Pinger_tea(peers.GetPeers(), PING_COUNT)
+	newList := pinger.Pinger_tea(*peers.GetPeers(), PING_COUNT)
 
 	fmt.Println("=============== Selected =====================")
 
-	processing.SelectPeers(&newList, peers.GetPeers())
+	processing.SelectPeers(&newList)
 
 	processing.ShowSelected()
 }

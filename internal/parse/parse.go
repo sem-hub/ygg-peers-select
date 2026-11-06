@@ -3,8 +3,6 @@ package parse
 import (
 	"bufio"
 	"fmt"
-	"log"
-	"net"
 	"os"
 	"regexp"
 	"strconv"
@@ -15,35 +13,20 @@ import (
 )
 
 type PeersList struct {
-	Peers []Peer
-}
-
-type Peer struct {
-	Idx    int
-	Name   string
-	IpList []string
-	Uris   []string
+	Peers []string
 }
 
 var (
 	//Url     = regexp.MustCompile("\\* `((tcp|tls|quic|ws|wss)://((?:[-a-zA-Z0-9]+\\.)+[a-zA-Z]+):(\\d+))`")
 	protocol = string(`(tcp|tls|quic|ws|wss)://`)
 	port     = string(`:(\d+)`)
-	key      = string(`(\?key=[a-z0-9]+)?`)
+	key      = string(`(\?[a-zA-Z0-9._~%+&=-]+)?`)
 	Url      = regexp.MustCompile(protocol + `((?:[-a-zA-Z0-9]+\.)+[a-zA-Z]+)` + port + key)
 	Url_ip   = regexp.MustCompile(protocol + `((?:[0-9]+\.){3}[0-9]+)` + port + key)
 	Url_ip6  = regexp.MustCompile(protocol + `\[([a-zA-Z0-9:]+)\]` + port + key)
 )
 
-func (p *PeersList) PeersIter(yield func(Peer) bool) {
-	for _, peer := range p.Peers {
-		if !yield(peer) {
-			return
-		}
-	}
-}
-
-func (p *PeersList) GetPeers() *[]Peer {
+func (p *PeersList) GetPeers() *[]string {
 	return &p.Peers
 }
 
@@ -52,21 +35,20 @@ func (p *PeersList) ParseFile(file string) error {
 
 	f, err := os.Open(file)
 	if err != nil {
-		log.Fatal("Can't open file " + file)
+		return fmt.Errorf("can't open file %s: %w", file, err)
 	}
 	defer f.Close()
 	scanner := bufio.NewScanner(f)
 	if !scanner.Scan() {
-		log.Fatal("File read error")
+		return fmt.Errorf("file read error")
 	}
 	if err := scanner.Err(); err != nil {
 		return fmt.Errorf("scan input: %w", err)
 	}
 
-	var n = int(0)
 	var m = int(0)
-	fqdns := make(map[string]int)
-	uris := make(map[string][]string)
+	var uris = []string{}
+	p.Peers = []string{}
 	for scanner.Scan() {
 		var uri, name string
 		if Url_ip.MatchString(scanner.Text()) {
@@ -75,6 +57,7 @@ func (p *PeersList) ParseFile(file string) error {
 			name = str[2]
 
 			logger.Debug("Found IP URL: " + uri)
+
 			m++
 		}
 		if Url_ip6.MatchString(scanner.Text()) {
@@ -98,55 +81,15 @@ func (p *PeersList) ParseFile(file string) error {
 		}
 
 		if name != "" {
-			uris[name] = append(uris[name], uri)
-
-			// Check if the name already exists
-			_, ok := fqdns[name]
-
-			if !ok {
-				fqdns[name] = n
-				n++
-			}
+			uris = append(uris, uri)
+			p.Peers = append(p.Peers, uri)
 		}
 	}
 
 	logger.Info(fmt.Sprint("Parsing finished. Found entries: ",
 		lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Render(strconv.Itoa(m))))
-	logger.Info("Resolving... ")
-	// Resolving IP addresses
-	ipList := make(map[string][]string)
-	for fqdn := range fqdns {
-		if net.ParseIP(fqdn) == nil {
-			logger.Debug("Lookup name: " + fqdn)
-			ips, err := net.LookupHost(fqdn)
-			if err != nil {
-				logger.Error("Name lookup error for: " + fqdn)
-			}
-			fileteredIps := make([]string, 0)
-			for _, ip := range ips {
-				if net.ParseIP(ip).To4() != nil {
-					fileteredIps = append(fileteredIps, ip)
-				}
-			}
-			ipList[fqdn] = fileteredIps
-		} else {
-			logger.Debug("Not lookup name" + fqdn)
-			ipList[fqdn] = append(ipList[fqdn], fqdn)
-		}
-	}
 
 	logger.Info(lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Render("Done"))
-
-	var peer Peer
-
-	for fqdn := range fqdns {
-		logger.Debug(fmt.Sprint("Found: ", fqdns[fqdn], fqdn, ipList[fqdn]))
-		peer.Idx = fqdns[fqdn]
-		peer.Name = fqdn
-		peer.Uris = uris[fqdn][:]
-		peer.IpList = ipList[fqdn][:]
-		p.Peers = append(p.Peers, peer)
-	}
 
 	return nil
 }
