@@ -105,8 +105,7 @@ func SelectProtocols(uris []Uri) {
 }
 func choicesView(m model) string {
 
-	tpl := "Select protocols:\n\n"
-	tpl += "%s\n\n%s\n%s\n"
+	tpl := "%s\n\n%s\n%s\n"
 
 	var choices string = ""
 	for i, p := range protocols {
@@ -324,6 +323,7 @@ func countUri(str string) int {
 }
 
 func ShowSelected() {
+	fmt.Println("Selected peers:")
 	for _, uri := range uriList {
 		if uri.Selected {
 			var str1 string = uri.Uri
