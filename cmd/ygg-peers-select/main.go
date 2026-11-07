@@ -24,8 +24,10 @@ const PING_COUNT = 5
 func init() {
 	flag.BoolVar(&options.Opts.WithGit, "git", false, "download with git. Otherwise downloadd zip file by default.")
 	flag.BoolVar(&options.Opts.GuessCountryYes, "y", false, "accept guessed country.")
+	flag.StringVar(&options.Opts.Country, "c", "", "specify country. Format: continent/country")
 	flag.BoolVar(&options.Opts.TestMode, "t", false, "do not ping. Just select peers.")
 	flag.BoolVar(&options.Opts.Verbose, "v", false, "show verbose messages.")
+	flag.BoolVar(&options.Opts.DoNotRemove, "d", false, "do not remove downloaded files.")
 	flag.BoolVar(&options.Opts.Ipv4, "4", false, "use IPv4 only.")
 }
 

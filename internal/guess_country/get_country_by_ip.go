@@ -25,33 +25,39 @@ func GetCountryByIP(workDir string) (string, error) {
 
 	logger := mlog.GetLogger()
 
-	logger.Info("Get country with " +
-		lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Render("ip-api.com"))
+	var countryGuessed string
+	if options.Opts.Country != "" {
+		logger.Info("Use specified country: " +
+			lipgloss.NewStyle().Foreground(lipgloss.Color("211")).Render(options.Opts.Country))
+		countryGuessed = strings.ToLower(options.Opts.Country)
+	} else {
+		logger.Info("Get country with " +
+			lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Render("ip-api.com"))
 
-	// Ask API for country guess
-	client := http.Client{
-		CheckRedirect: func(r *http.Request, via []*http.Request) error {
-			r.URL.Opaque = r.URL.Path
-			return nil
-		},
+		// Ask API for country guess
+		client := http.Client{
+			CheckRedirect: func(r *http.Request, via []*http.Request) error {
+				r.URL.Opaque = r.URL.Path
+				return nil
+			},
+		}
+		// Put content on file
+		resp, err := client.Get(apiUrl)
+		if err != nil {
+			logger.Error("Can't fetch file: " + err.Error())
+			return "", err
+		}
+		defer resp.Body.Close()
+
+		var data apiData
+		json.NewDecoder(resp.Body).Decode(&data)
+		if data.Status != "success" {
+			logger.Error("Can't get IP info: " + data.Status)
+			return "", err
+		}
+
+		countryGuessed = filepath.Join(strings.ToLower(data.Continent), strings.ToLower(data.Country))
 	}
-	// Put content on file
-	resp, err := client.Get(apiUrl)
-	if err != nil {
-		logger.Error("Can't fetch file: " + err.Error())
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	var data apiData
-	json.NewDecoder(resp.Body).Decode(&data)
-	if data.Status != "success" {
-		logger.Error("Can't get IP info: " + data.Status)
-		return "", err
-	}
-
-	countryGuessed := filepath.Join(strings.ToLower(data.Continent), strings.ToLower(data.Country))
-
 	path := filepath.Join(workDir, countryGuessed+".md")
 
 	// Check if file exists

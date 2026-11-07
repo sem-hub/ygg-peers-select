@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/sem-hub/ygg-peers-select/internal/mlog"
+	"github.com/sem-hub/ygg-peers-select/internal/options"
 )
 
 type tempDir struct {
@@ -21,6 +22,10 @@ func CreateTempDir() (tempDir, error) {
 }
 
 func (d *tempDir) Delete() {
+	if options.Opts.DoNotRemove {
+		mlog.GetLogger().Debug("Do not remove temp DIR: " + d.path)
+		return
+	}
 	mlog.GetLogger().Debug("Remove DIR: " + d.path)
 	os.RemoveAll(d.path)
 }
