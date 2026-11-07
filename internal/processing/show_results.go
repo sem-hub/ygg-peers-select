@@ -92,7 +92,7 @@ func SelectProtocols(uris []Uri) {
 		false,
 		false,
 		false,
-		true,
+		false,
 		viewport.New(0, 0),
 	}
 	for _, p := range protocols {
@@ -106,15 +106,17 @@ func SelectProtocols(uris []Uri) {
 func choicesView(m model) string {
 
 	tpl := "Select protocols:\n\n"
-	tpl += "%s\n\n%s\n"
+	tpl += "%s\n\n%s\n%s\n"
 
 	var choices string = ""
 	for i, p := range protocols {
 		choices += checkbox(p, &m.choice, i == m.upCursor, m.upperView) + "\n"
 	}
 
+	info := "Shown: " + fmt.Sprintf("%d", len(currentViewIdx)) + " from " + fmt.Sprintf("%d", len(m.uris))
+	info += "     (Use Tab to switch views and select protocols, Space to select peers, Enter or 'q' to confirm.)"
 	line := strings.Repeat("─", max(0, m.viewport.Width))
-	return fmt.Sprintf(tpl, choices, line)
+	return fmt.Sprintf(tpl, choices, info, line)
 }
 
 func (m *model) keepCursorVisible() {
