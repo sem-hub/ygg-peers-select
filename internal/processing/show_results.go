@@ -116,6 +116,18 @@ func choicesView(m model) string {
 	line := strings.Repeat("─", max(0, m.viewport.Width))
 	return fmt.Sprintf(tpl, choices, line)
 }
+
+func (m *model) keepCursorVisible() {
+	if m.viewport.Height <= 0 {
+		return
+	}
+	if m.downCursor < m.viewport.YOffset {
+		m.viewport.SetYOffset(m.downCursor)
+	} else if m.downCursor >= m.viewport.YOffset+m.viewport.Height {
+		m.viewport.SetYOffset(m.downCursor - m.viewport.Height + 1)
+	}
+}
+
 func updateChoices(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -128,12 +140,12 @@ func updateChoices(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 				}
 				return m, nil
 			} else {
-				m.downCursor++
-				n := len(strings.Split(getContent(&m.uris, &m.choice, m.downCursor), "\n")) - 1
-				if m.downCursor >= n {
-					m.downCursor = n - 1
+				if m.downCursor+1 < len(currentViewIdx) {
+					m.downCursor++
 				}
 				m.viewport.SetContent(getContent(&m.uris, &m.choice, m.downCursor))
+				m.keepCursorVisible()
+				return m, nil
 			}
 		case "k", "up":
 			if m.upperView {
@@ -148,6 +160,8 @@ func updateChoices(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 					m.downCursor = 0
 				}
 				m.viewport.SetContent(getContent(&m.uris, &m.choice, m.downCursor))
+				m.keepCursorVisible()
+				return m, nil
 			}
 		case " ":
 			if m.upperView {
@@ -156,8 +170,11 @@ func updateChoices(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 				m.viewport.SetContent(getContent(&m.uris, &m.choice, m.downCursor))
 				m.viewport.GotoTop()
 			} else {
-				m.uris[currentViewIdx[m.downCursor]].Selected = !m.uris[currentViewIdx[m.downCursor]].Selected
-				m.viewport.SetContent(getContent(&m.uris, &m.choice, m.downCursor))
+				if m.downCursor < len(currentViewIdx) {
+					idx := currentViewIdx[m.downCursor]
+					m.uris[idx].Selected = !m.uris[idx].Selected
+					m.viewport.SetContent(getContent(&m.uris, &m.choice, m.downCursor))
+				}
 			}
 			var cmd tea.Cmd
 			m.viewport, cmd = m.viewport.Update(nil)
@@ -176,14 +193,16 @@ func updateChoices(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 
 	case tea.WindowSizeMsg:
 		if !m.ready {
-			m.viewport = viewport.New(msg.Width, msg.Height-10)
+			m.viewport = viewport.New(msg.Width, max(0, msg.Height-10))
 			//m.viewport.YPosition = headerHeight
 			m.viewport.YPosition = 0
 			m.viewport.SetContent(getContent(&m.uris, &m.choice, 0))
 			m.ready = true
 		} else {
 			m.viewport.Width = msg.Width
-			m.viewport.Height = msg.Height - 10
+			m.viewport.Height = max(0, msg.Height-10)
+			m.viewport.SetYOffset(m.viewport.YOffset)
+			m.keepCursorVisible()
 		}
 	}
 	var cmd tea.Cmd
@@ -219,7 +238,7 @@ func (m model) View() string {
 func getContent(uris *[]Uri, choice *map[string]bool, cursor int) string {
 	var content string = ""
 
-	currentViewIdx = make([]int, len(*uris))
+	currentViewIdx = make([]int, 0, len(*uris))
 
 	var i int = 1
 	for n, uri := range *uris {
@@ -228,7 +247,7 @@ func getContent(uris *[]Uri, choice *map[string]bool, cursor int) string {
 			if err != nil {
 			} // XXX
 			if (*choice)[p] && m {
-				currentViewIdx[i-1] = n
+				currentViewIdx = append(currentViewIdx, n)
 				var num string = strconv.Itoa(i)
 				if i < 10 {
 					num = " " + num
@@ -276,7 +295,7 @@ func getContent(uris *[]Uri, choice *map[string]bool, cursor int) string {
 			}
 		}
 	}
-	return content
+	return strings.TrimSuffix(content, "\n")
 
 }
 
